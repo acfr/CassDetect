@@ -15,8 +15,6 @@ Requirements:
 
 Clone the repository, then build and run the docker image 
 ```bash
-git clone git@gitlab.acfr.usyd.edu.au:its/laarma/cassdetect.git
-cd cassdetect
 docker buildx build -t laarma .
 docker run --gpus all -it -v $PWD:/app laarma:latest
 ```
