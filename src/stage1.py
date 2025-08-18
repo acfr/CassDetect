@@ -61,7 +61,7 @@ def step_2(pre_path, output_img_path, output_mask_path):
 	
     # cassowary_prompt = [["black bird"],['flightless bird']]  # prompt for open word vocabulary cassowary detection for fast processing
     # prompt from wordnet: flightless bird,ratite,ratite bird ,black flightless bird,black ratite ,black ratite bird,cassowary
-    aug_cassowary_prompt = [['flightless bird'],['atite'],['ratite bird '],['black flightless bird'],['black ratite '],['black ratite bird'],['cassowary']]
+    aug_cassowary_prompt = [['flightless bird'],['ratite'],['ratite bird'],['black flightless bird'],['black ratite'],['black ratite bird'],['cassowary']]
     real_imgs_path = pre_path + "data/stage1/class_images/"
 
     # generate synthetic data

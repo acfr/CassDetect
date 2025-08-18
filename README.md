@@ -6,6 +6,8 @@
 ## Introduction
 This repository contains code for a self-training machine learning pipeline developed to detect cassowaries or other animals on roads and roadsides.
 
+The repository for detection system implementation can be found [here](https://github.com/acfr/laarma)
+
 Contact: [kumli](https://github.com/kumli), [msha3421](https://github.com/msha3421), [Hommus](https://github.com/Hommus)
 
 ## Installation

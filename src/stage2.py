@@ -9,14 +9,14 @@ import torch
 from ultralytics import YOLO
 
 import utils
+from tqdm import tqdm
 from transformers import Owlv2ForObjectDetection, Owlv2Processor
 
 
 def step_1(pre_path, field_data_path, target_classes):
-    """
-    Iterate over field data and copy data into new folder if image contains a bbox with target class.
-    NOTE: This step is only here as a buffer to reduce the amount of data that the VLM needs to process.
-    """
+    
+    print('Step 1: Iterate over field data and copy data into new folder if image contains a bbox with target class.')
+    print('NOTE: This step is only here as a buffer to reduce the amount of data that the VLM needs to process.')
 
     # setup
     input_folder = pre_path + "data/stage2/raw_data/"  ##raw data downloaded from device
@@ -28,10 +28,10 @@ def step_1(pre_path, field_data_path, target_classes):
     # get list of class names
     img_path = input_folder + raw_field_data[0]
     img = cv2.imread(img_path)
-    results = model(img)
+    results = model(img, verbose=False, device="cuda" if torch.cuda.is_available() else "cpu")
     names = results[0].names
 
-    for raw_img in raw_field_data:
+    for raw_img in tqdm(raw_field_data):
         # skip images that have already been processed
         if raw_img in processed_field_data:
             continue
@@ -39,23 +39,20 @@ def step_1(pre_path, field_data_path, target_classes):
         # get prediction
         img_path = input_folder + raw_img
         img = cv2.imread(img_path)
-        results = model(img)
+        results = model(img, verbose=False, device="cuda" if torch.cuda.is_available() else "cpu")
 
         # copy image if containing a bbox with target class
-        # for class_id in results[0].boxes.cls.tolist():
-        # name = names[int(class_id)]
-        # if name in target_classes:
-        # shutil.copy(img_path, field_data_path + raw_img)
-        # break
-
-        # TODO Remove copy image always
-        shutil.copy(img_path, field_data_path + raw_img)
+        for class_id in results[0].boxes.cls.tolist():
+            name = names[int(class_id)]
+            if name in target_classes:
+                shutil.copy(img_path, field_data_path + raw_img)
+                break
 
 
 def step_2(pre_path, field_data_path, prompts, label_id_write):
-    """
-    Iterate over collected data and generate VLM labels.
-    """
+    
+    print('Step 2: Iterate over collected data and generate VLM labels.')
+
     img_save_path = pre_path + "data/stage2/vlm_detect/images/"
     label_save_path = pre_path + "data/stage2/vlm_detect/labels/"
 
@@ -68,11 +65,11 @@ def step_2(pre_path, field_data_path, prompts, label_id_write):
     model = Owlv2ForObjectDetection.from_pretrained("google/owlv2-base-patch16-ensemble", device_map=device)
 
     img_files = os.listdir(field_data_path)
-    for img_file in img_files:
+    for img_file in tqdm(img_files):
         image_path = field_data_path + "/" + img_file
 
         #_, scores, boxes = utils.open_voc_detect(image_path, prompts, model, processor)
-        _, scores, boxes = utils.open_voc_detect_lbaug(image_path, prompts, model, processor, threshould=0.5)
+        _, scores, boxes = utils.open_voc_detect_lbaug(image_path, prompts, model, processor, threshold=0.4)
         vlm_labels = utils.write_label(boxes, scores, label_id_write, score_threshold=0.05)
         # save vlm labels
         if len(vlm_labels) > 0:
@@ -82,9 +79,9 @@ def step_2(pre_path, field_data_path, prompts, label_id_write):
 
 
 def step_3(pre_path, field_data_path, label_id_write):
-    """
-    Relabel the FP and TP data.
-    """
+    
+    print('Step 3: Relabel the FP and TP data.')
+
     img_save_path = pre_path + "data/stage2/vlm_detect/images/"
     label_save_path = pre_path + "data/stage2/vlm_detect/labels/"
 
@@ -106,14 +103,14 @@ def step_3(pre_path, field_data_path, label_id_write):
     sel_id = [11, 2, 0, 7]  # stop sign, car, person, truck
 
     # Combine TP labels from VLM and YOLO
-    for img_name in tp_files:
+    for img_name in tqdm(tp_files):
 
         # setup
         file_name = img_name.replace("jpeg", "").replace("jpg", "")
         img = Image.open(img_save_path + img_name)
         img_w, img_h = img.size
 
-        results = model_pretrain(img, device="cuda")
+        results = model_pretrain(img, verbose=False, device="cuda" if torch.cuda.is_available() else "cpu")
         labels = utils.get_labels(results, img_h, img_w)
 
         # load existing labels from VLM
@@ -134,12 +131,11 @@ def step_3(pre_path, field_data_path, label_id_write):
         # write to disk
         np.savetxt(tp_labels_path + file_name + "txt", tp_label, fmt="%d %f %f %f %f")
         shutil.copy(img_save_path + img_name, tp_imgs_path + img_name)
-        print("")
 
     # Use the remaining images from the field data for the FP dataset
     fp_files = [file for file in field_data_files if file not in tp_files]
 
-    for img_name in fp_files:
+    for img_name in tqdm(fp_files):
 
         # setup
         file_name = img_name.replace("jpeg", "").replace("jpg", "")
@@ -147,7 +143,7 @@ def step_3(pre_path, field_data_path, label_id_write):
         img = Image.open(img_path)
         img_w, img_h = img.size
 
-        results = model_pretrain(img, device="cuda")
+        results = model_pretrain(img, verbose=False, device="cuda" if torch.cuda.is_available() else "cpu")
         labels = utils.get_labels(results, img_h, img_w)
 
         shutil.copy(img_path, fp_imgs_path + img_name)
@@ -159,9 +155,9 @@ def step_3(pre_path, field_data_path, label_id_write):
 
 
 def step_4(path):
-    """
-    Merge all dataset.
-    """
+    
+    print('Step 4: Merge all dataset.')
+
     stage1_imgs = path + "data/stage1/synthesised/images/"
     stage1_labels = path + "data/stage1/synthesised/labels/"
 
@@ -173,6 +169,9 @@ def step_4(path):
 
     final_imgs = path + "trainer/train/images/"
     final_labels = path + "trainer/train/labels/"
+
+    os.makedirs(final_imgs, exist_ok=True)
+    os.makedirs(final_labels, exist_ok=True)
 
     for img in os.listdir(stage1_imgs):
         shutil.copy(stage1_imgs + img, final_imgs + img)
@@ -197,7 +196,7 @@ if __name__ == "__main__":
     label_id_write = 80
     target_classes = ["cassowary"]
     #prompts = [["black bird"],['flightless bird']]
-    prompts = [['flightless bird'],['atite'],['ratite bird '],['black flightless bird'],['black ratite '],['black ratite bird'],['cassowary']]
+    prompts = [['flightless bird'],['ratite'],['ratite bird'],['black flightless bird'],['black ratite'],['black ratite bird'],['cassowary']]
     field_data_path = pre_path + "data/stage2/processed_data/"
 
     os.makedirs(field_data_path, exist_ok=True)

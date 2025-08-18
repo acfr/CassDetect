@@ -10,7 +10,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Train and evaluate the YOLO model for cassowary detection.")
     parser.add_argument("--action", type=str, default="train", help='Action to perform: "train" or "eval"')
     parser.add_argument("--batch_size", type=int, default=96, help="Batch size for training")
-    parser.add_argument("--epochs", type=int, default=2, help="Num of epochs to train")
+    parser.add_argument("--epochs", type=int, default=50, help="Num of epochs to train")
     parser.add_argument(
         "--eval_model_path",
         type=str,

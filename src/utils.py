@@ -117,7 +117,7 @@ def socre_refine(bboxes,scores,bboxes_nms,scores_nms,iou_threshold=0.7,refine_pa
         socres_refine.append(score_nms)
     return socres_refine
 
-def open_voc_detect_lbaug(image_path, autoprt,model, processor, threshould):
+def open_voc_detect_lbaug(image_path, autoprt,model, processor, threshold):
     ## intput:
     ## image_path: path to image
     ## texts: list of text queries in the format of [['text1'],['text2']]
@@ -139,7 +139,7 @@ def open_voc_detect_lbaug(image_path, autoprt,model, processor, threshould):
         texts = [lb]
         image,scores,boxes = open_voc_detect(image_path, texts, model, processor)
         for i in range(len(scores)):
-            if scores[i] > threshould:
+            if scores[i] > threshold:
                 aug_boxes.append(boxes[i])
                 aug_scores.append(scores[i])
                 #aug_labels.append(labels[i])
@@ -491,8 +491,8 @@ def gradient_synobj(back_img, back_label, fg_img, back_mask, bbox, cls_id):
 ### write a function calcuate the IoU of two boxes
 def compute_iou(box1_xcycwh, box2_xcycwh):
     """
-    计算两个边界框的IoU。
-    边界框格式：[x1, y1, x2, y2]，其中(x1, y1)是左上角的坐标，(x2, y2)是右下角的坐标。
+    Calculate IoU of two bounding boxes.
+    bbox format: [x1, y1, x2, y2] where (x1, y1) is top left coordinates, (x2, y2) is buttom right coordinates
     """
     box1 = [
         box1_xcycwh[0] - box1_xcycwh[2] / 2,
