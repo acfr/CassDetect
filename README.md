@@ -8,7 +8,7 @@ This repository contains code for a self-training machine learning pipeline deve
 
 The repository for detection system implementation can be found [here](https://github.com/acfr/laarma)
 
-Contact: [kumli](https://github.com/kumli), [msha3421](https://github.com/msha3421), [Hommus](https://github.com/Hommus)
+Contact: [msha3421](https://github.com/msha3421)
 
 ## Installation
 Requirements:
